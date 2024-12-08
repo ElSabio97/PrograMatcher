@@ -1,56 +1,83 @@
 import streamlit as st
 import pandas as pd
-from bs4 import BeautifulSoup
+from TableExtractor import parse_pdf_schedule
 from datetime import datetime
+import requests           
+import io
+import datetime
 
 # Título de la aplicación
-st.title("Comparador de Programación de Vuelos")
+st.title("Progra Matcher with love")
 
 # Instrucciones para el usuario
-st.write("Sube tu programación en formato CSV y la programación de tu amiga en formato HTML para ver si coinciden en algún vuelo.")
+st.write("Sube tu programación para ver si coincides con Pedro en algún momento :)")
 
-# Subir archivos
-csv_file = st.file_uploader("Tu programación (CSV)", type="csv")
-html_file = st.file_uploader("Programación de tu amiga (HTML)", type="html")
+url = f"https://drive.google.com/uc?id=1emmB5HefzZNNVSynAxJVIEsBq61C9pRp"
 
-# Función para cargar y procesar el CSV
-def cargar_programacion_csv(file):
-    df = pd.read_csv(file)
-    df['Hora'] = pd.to_datetime(df['Hora'], format='%H:%M')  # Asegura el formato datetime
-    return df[['Origen', 'Destino', 'Hora']]
+# Descargar el archivo y leerlo en un DataFrame
+@st.cache_resource
+def cargar_mi_progra():
+    response = requests.get(url)
+    df = pd.read_csv(io.StringIO(response.text), header=None)
+    df = df.drop(columns=[0,6,7])
+    df = df.rename(columns={1: "Departure", 2: "Origin", 3: "Arrival", 4: "Destination", 5: "Flight number"})
 
-# Función para cargar y procesar el HTML
-def cargar_programacion_html(html_content):
-    soup = BeautifulSoup(html_content, 'html.parser')
-    vuelos = []
-    for row in soup.select('table#memo tr'):  # Ajusta el selector según el HTML
-        columns = row.find_all('td')
-        if columns:
-            origen = columns[0].text.strip()
-            destino = columns[1].text.strip()
-            hora = datetime.strptime(columns[2].text.strip(), '%H:%M')  # Ajusta el formato si es necesario
-            vuelos.append({'Origen': origen, 'Destino': destino, 'Hora': hora})
-    return pd.DataFrame(vuelos)
+    df['Departure'] = pd.to_datetime(df['Departure'], format='%d/%m/%Y %H:%M')  # Ajusta el formato de fecha y hora
+    df['Arrival'] = pd.to_datetime(df['Arrival'], format='%d/%m/%Y %H:%M')  
 
-# Función para encontrar coincidencias
-def encontrar_coincidencias(df1, df2):
-    coincidencias = pd.merge(df1, df2, on=['Origen', 'Destino', 'Hora'])
-    return coincidencias
+    return df
+
+su_progra_file = st.file_uploader("Tu progra", type="pdf")
+
+
+# Función para encontrar coincidencias con indicación del caso
+def encontrar_coincidencias(df_su_progra, df_mi_progra):
+    import datetime
+    import pandas as pd
+
+    resultados = []
+    delta = datetime.timedelta(days=0, hours=2)
+
+    for _, row_a in df_su_progra.iterrows():
+        for _, row_b in df_mi_progra.iterrows():
+            if ((abs(row_a['Departure'] - row_b['Departure']) <= delta) and 
+                (row_a['Origin'] == row_b['Origin'])):
+                # Combinar columnas de A y B junto con el caso
+                resultado = {**row_a.to_dict(), **row_b.to_dict(), "match_case": "El día " + str(row_a['Departure'].strftime("%d/%m")) + " coincidiremos al salir de " + row_a['Origin']}
+                resultados.append(resultado)
+            if ((abs(row_a['Departure'] - row_b['Arrival']) <= delta) and 
+                (row_a['Origin'] == row_b['Destination'])):
+                resultado = {**row_a.to_dict(), **row_b.to_dict(), "match_case": "El día " + str(row_a['Departure'].strftime("%d/%m")) + " coincidiremos saliendo tu de/llegando yo a " + row_a['Origin']}
+                resultados.append(resultado)
+            if ((abs(row_a['Arrival'] - row_b['Departure']) <= delta) and 
+                (row_a['Destination'] == row_b['Origin'])):
+                resultado = {**row_a.to_dict(), **row_b.to_dict(), "match_case": "El día " + str(row_a['Departure'].strftime("%d/%m")) + " coincidiremos llegando tu a/saliendo yo de " + row_a['Origin']}
+                resultados.append(resultado)
+            if ((abs(row_a['Arrival'] - row_b['Arrival']) <= delta) and 
+                (row_a['Destination'] == row_b['Destination'])):
+                resultado = {**row_a.to_dict(), **row_b.to_dict(), "match_case": "El día " + str(row_a['Departure'].strftime("%d/%m")) + " coincidiremos al llegar a " + row_a['Origin']}
+                resultados.append(resultado)
+
+    df_matches = pd.DataFrame(resultados).drop_duplicates()
+
+    return df_matches
 
 # Procesar archivos y mostrar coincidencias
-if csv_file and html_file:
-    # Cargar programación CSV y HTML
-    df_mi_programacion = cargar_programacion_csv(csv_file)
-    html_content = html_file.read().decode('utf-8')
-    df_programacion_amiga = cargar_programacion_html(html_content)
+if su_progra_file:
+    
+    mi_progra = cargar_mi_progra()
+    su_progra = parse_pdf_schedule(su_progra_file)
+
+    st.write(encontrar_coincidencias(su_progra,mi_progra))
+
 
     # Encontrar coincidencias
-    coincidencias = encontrar_coincidencias(df_mi_programacion, df_programacion_amiga)
+    # coincidencias = encontrar_coincidencias(df_mi_programacion, df_programacion_amiga)
     
-    # Mostrar resultados
-    if not coincidencias.empty:
-        st.success("¡Se encontraron coincidencias!")
-        st.write("Aquí están los vuelos en los que coinciden:")
-        st.table(coincidencias)
-    else:
-        st.warning("No se encontraron coincidencias.")
+    # # Mostrar resultados
+    # if not coincidencias.empty:
+    #     st.success("¡Se encontraron coincidencias!")
+    #     st.write("Aquí están los vuelos en los que coinciden:")
+    #     st.table(coincidencias)
+    # else:
+    #     st.warning("No se encontraron coincidencias.")
