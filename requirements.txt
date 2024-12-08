@@ -1,3 +1,6 @@
 streamlit
 pandas
 beautifulsoup4
+regex
+pdfplumber
+datetime
