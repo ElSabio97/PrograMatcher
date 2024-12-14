@@ -98,6 +98,7 @@ def parse_pdf_schedule(pdf_path):
     # Drop unnecessary columns
     dfs = dfs.drop(columns=['Date', 'Timetable', 'DepartureTime', 'ArrivalTime', 'Details'])
     dfs = dfs[['Departure', 'Origin', 'Arrival', 'Destination', 'Duties']]
+    dfs = dfs.rename(columns={'Duties': 'Flight number'})
 
 
     return dfs
