@@ -6,7 +6,7 @@ import io
 from datetime import datetime, timedelta
 
 # Título de la aplicación
-st.title("Progra Matcher for my friend***")
+st.title("Progra Matcher")
 
 st.write("Sube tu programación para ver si coincides conmigo en en algún momento :)")
 
@@ -83,6 +83,7 @@ if su_progra_file:
 
             # Encontrar coincidencias
             coincidencias = encontrar_coincidencias(su_progra, mi_progra)
+            
             # Mostrar resultados
             if not coincidencias.empty:
                 st.success("It's a match! " + '\N{HEAVY BLACK HEART}')
