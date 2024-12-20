@@ -6,7 +6,7 @@ import io
 from datetime import datetime, timedelta
 
 # Título de la aplicación
-st.title("Progra Matcher")
+st.title("Progra Matcher for my friend***")
 
 st.write("Sube tu programación para ver si coincides conmigo en en algún momento :)")
 
@@ -26,7 +26,7 @@ def cargar_mi_progra():
 su_progra_file = st.file_uploader("Tu progra", type="pdf")
 
 # Ajuste del rango temporal
-rango_tiempo = st.slider("Ajusta el rango de coincidencia (en horas):", 0.25, 3.0, 0.5)
+rango_tiempo = st.slider("Ajusta el máximo tiempo que queráis esperaros el uno al otro (en horas):", 0.25, 3.0, 0.5)
 delta = timedelta(hours=rango_tiempo)
 
 # Validación del archivo subido
@@ -45,31 +45,35 @@ if su_progra_file:
                 resultados = []
                 for _, row_a in df_su_progra.iterrows():
                     for _, row_b in df_mi_progra.iterrows():
+                        # Coincidimos saliendo
                         if ((abs(row_a['Departure'] - row_b['Departure']) <= delta) and 
                             (row_a['Origin'] == row_b['Origin'])):
                             resultado = {"Fecha": f"{row_a['Departure'].strftime('%d/%m')}", "Lugar": f"{row_a['Origin']}",
-                                         "Margen": f"{str(abs(row_a['Departure'] - row_b['Departure']))[-8:-3]}",
+                                         "Espera": f"{str(abs(row_a['Departure'] - row_b['Departure']))[-8:-3]}",
 
                                          "Detalles": f"Pedro sale a las {row_b['Departure'].strftime('%H:%M')} y Bea a las {row_a['Departure'].strftime('%H:%M')} con {row_a['Flight number']}"}
                             resultados.append(resultado)
+                        # Coincidimos yo llegando y ella saliendo
                         if ((abs(row_a['Departure'] - row_b['Arrival']) <= delta) and 
                             (row_a['Origin'] == row_b['Destination'])):
                             resultado = {"Fecha": f"{row_a['Departure'].strftime('%d/%m')}", "Lugar": f"{row_a['Origin']}",
-                                         "Margen": f"{str(abs(row_a['Departure'] - row_b['Arrival']))[-8:-3]}",
+                                         "Espera": f"{str(abs(row_a['Departure'] - row_b['Arrival']))[-8:-3]}",
 
                                          "Detalles": f"Pedro llegará a las {row_b['Arrival'].strftime('%H:%M')} y Bea saldrá a las {row_a['Departure'].strftime('%H:%M')} con {row_a['Flight number']}"}
                             resultados.append(resultado)
+                        # Coincidimos yo saliendo y ella llegando
                         if ((abs(row_a['Arrival'] - row_b['Departure']) <= delta) and 
                             (row_a['Destination'] == row_b['Origin'])):
-                            resultado = {"Fecha": f"{row_a['Departure'].strftime('%d/%m')}", "Lugar": f"{row_a['Origin']}",
-                                         "Margen": f"{str(abs(row_a['Arrival'] - row_b['Departure']))[-8:-3]}",
+                            resultado = {"Fecha": f"{row_a['Arrival'].strftime('%d/%m')}", "Lugar": f"{row_a['Destination']}",
+                                         "Espera": f"{str(abs(row_a['Arrival'] - row_b['Departure']))[-8:-3]}",
 
                                          "Detalles": f"Pedro saldrá a las {row_b['Departure'].strftime('%H:%M')} y Bea llegarás a las {row_a['Arrival'].strftime('%H:%M')} con {row_a['Flight number']}"}
                             resultados.append(resultado)
+                        # Coincidimos llegando
                         if ((abs(row_a['Arrival'] - row_b['Arrival']) <= delta) and 
                             (row_a['Destination'] == row_b['Destination'])):
-                            resultado = {"Fecha": f"{row_a['Departure'].strftime('%d/%m')}", "Lugar": f"{row_a['Origin']}",
-                                         "Margen": f"{str(abs(row_a['Arrival'] - row_b['Arrival']))[-8:-3]}",
+                            resultado = {"Fecha": f"{row_a['Departure'].strftime('%d/%m')}", "Lugar": f"{row_a['Destination']}",
+                                         "Espera": f"{str(abs(row_a['Arrival'] - row_b['Arrival']))[-8:-3]}",
 
                                          "Detalles": f"Pedro llegará a las {row_b['Arrival'].strftime('%H:%M')} y Bea a las {row_a['Arrival'].strftime('%H:%M')} con {row_a['Flight number']}"}
                             resultados.append(resultado)
@@ -79,7 +83,6 @@ if su_progra_file:
 
             # Encontrar coincidencias
             coincidencias = encontrar_coincidencias(su_progra, mi_progra)
-
             # Mostrar resultados
             if not coincidencias.empty:
                 st.success("It's a match! " + '\N{HEAVY BLACK HEART}')
