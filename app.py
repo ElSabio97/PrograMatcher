@@ -45,38 +45,43 @@ if su_progra_file:
                 resultados = []
                 for _, row_a in df_su_progra.iterrows():
                     for _, row_b in df_mi_progra.iterrows():
+
                         # Coincidimos saliendo
                         if ((abs(row_a['Departure'] - row_b['Departure']) <= delta) and 
                             (row_a['Origin'] == row_b['Origin'])):
-                            resultado = {"Fecha": f"{row_a['Departure'].strftime('%d/%m')}", "Lugar": f"{row_a['Origin']}",
+                            resultado = {"Fecha": f"{row_a['Departure'].strftime('%d/%m')}", 
+                                         "Lugar": f"{row_a['Origin']}",
                                          "Espera": f"{str(abs(row_a['Departure'] - row_b['Departure']))[-8:-3]}",
-
-                                         "Detalles": f"Pedro sale a las {row_b['Departure'].strftime('%H:%M')} y Bea a las {row_a['Departure'].strftime('%H:%M')} con {row_a['Flight number']}"}
+                                         "Detalles": f"Pedro sale a las {row_b['Departure'].strftime('%H:%M')} y Bea a las {row_a['Departure'].strftime('%H:%M')} {'posicionada con ' + row_a['Flight number'] + ' destino a ' +  row_a['Destination'] if row_a['Position'] == '*' else 'trabajando en SWT' + row_a['Flight number']}"}
                             resultados.append(resultado)
+
                         # Coincidimos yo llegando y ella saliendo
                         if ((abs(row_a['Departure'] - row_b['Arrival']) <= delta) and 
                             (row_a['Origin'] == row_b['Destination'])):
-                            resultado = {"Fecha": f"{row_a['Departure'].strftime('%d/%m')}", "Lugar": f"{row_a['Origin']}",
+                            resultado = {"Fecha": f"{row_a['Departure'].strftime('%d/%m')}", 
+                                         "Lugar": f"{row_a['Origin']}",
                                          "Espera": f"{str(abs(row_a['Departure'] - row_b['Arrival']))[-8:-3]}",
-
-                                         "Detalles": f"Pedro llegará a las {row_b['Arrival'].strftime('%H:%M')} y Bea saldrá a las {row_a['Departure'].strftime('%H:%M')} con {row_a['Flight number']}"}
+                                         "Detalles": f"Pedro llegará a las {row_b['Arrival'].strftime('%H:%M')} y Bea saldrá a las {row_a['Departure'].strftime('%H:%M')} {'posicionada con ' + row_a['Flight number'] + ' destino a ' +  row_a['Destination'] if row_a['Position'] == '*' else 'trabajando en SWT' + row_a['Flight number']}"}
                             resultados.append(resultado)
+
                         # Coincidimos yo saliendo y ella llegando
                         if ((abs(row_a['Arrival'] - row_b['Departure']) <= delta) and 
                             (row_a['Destination'] == row_b['Origin'])):
-                            resultado = {"Fecha": f"{row_a['Arrival'].strftime('%d/%m')}", "Lugar": f"{row_a['Destination']}",
+                            resultado = {"Fecha": f"{row_a['Arrival'].strftime('%d/%m')}", 
+                                         "Lugar": f"{row_a['Destination']}",
                                          "Espera": f"{str(abs(row_a['Arrival'] - row_b['Departure']))[-8:-3]}",
-
-                                         "Detalles": f"Pedro saldrá a las {row_b['Departure'].strftime('%H:%M')} y Bea llegarás a las {row_a['Arrival'].strftime('%H:%M')} con {row_a['Flight number']}"}
+                                         "Detalles": f"Pedro saldrá a las {row_b['Departure'].strftime('%H:%M')} y Bea llegarás a las {row_a['Arrival'].strftime('%H:%M')} {'posicionada con ' + row_a['Flight number'] + ' desde ' +  row_a['Origin'] if row_a['Position'] == '*' else 'trabajando en SWT' + row_a['Flight number']}"}
                             resultados.append(resultado)
+
                         # Coincidimos llegando
                         if ((abs(row_a['Arrival'] - row_b['Arrival']) <= delta) and 
                             (row_a['Destination'] == row_b['Destination'])):
-                            resultado = {"Fecha": f"{row_a['Departure'].strftime('%d/%m')}", "Lugar": f"{row_a['Destination']}",
+                            resultado = {"Fecha": f"{row_a['Departure'].strftime('%d/%m')}", 
+                                         "Lugar": f"{row_a['Destination']}",
                                          "Espera": f"{str(abs(row_a['Arrival'] - row_b['Arrival']))[-8:-3]}",
-
-                                         "Detalles": f"Pedro llegará a las {row_b['Arrival'].strftime('%H:%M')} y Bea a las {row_a['Arrival'].strftime('%H:%M')} con {row_a['Flight number']}"}
+                                         "Detalles": f"Pedro llegará a las {row_b['Arrival'].strftime('%H:%M')} y Bea a las {row_a['Arrival'].strftime('%H:%M')} {'posicionada con ' + row_a['Flight number'] + ' desde ' +  row_a['Origin'] if row_a['Position'] == '*' else 'trabajando en SWT' + row_a['Flight number']}"}
                             resultados.append(resultado)
+
                 df_matches = pd.DataFrame(resultados).drop_duplicates()
                 
                 return df_matches
