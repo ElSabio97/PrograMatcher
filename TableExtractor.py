@@ -79,7 +79,9 @@ def parse_pdf_schedule(pdf_path):
     dfs["Timetable"] = dfs["Timetable"].str.replace(r'A', '', regex=True)
     dfs["Timetable"] = dfs["Timetable"].str.replace(r'/.*', '', regex=True)
     dfs["Timetable"] = dfs["Timetable"].str.replace(r'[\u2070-\u209F].', '', regex=True)
-    dfs["Details"] = dfs["Details"].str.replace('*', '')
+    # Add the Position column
+    dfs['Position'] = dfs['Details'].apply(lambda x: '*' if '*' in str(x) else '')
+    dfs['Details'] = dfs['Details'].str.replace('*', '')  # Remove the * from Details after extracting it
     dfs = dfs[dfs['Details'].str.contains(r'^[A-Za-z]{3} - [A-Za-z]{3}$', regex=True)]
 
     # Split Details into Origin and Destination
@@ -97,7 +99,7 @@ def parse_pdf_schedule(pdf_path):
 
     # Drop unnecessary columns
     dfs = dfs.drop(columns=['Date', 'Timetable', 'DepartureTime', 'ArrivalTime', 'Details'])
-    dfs = dfs[['Departure', 'Origin', 'Arrival', 'Destination', 'Duties']]
+    dfs = dfs[['Departure', 'Origin', 'Arrival', 'Destination', 'Duties','Position']]
     dfs = dfs.rename(columns={'Duties': 'Flight number'})
 
 
