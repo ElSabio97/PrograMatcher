@@ -76,9 +76,14 @@ def parse_pdf_schedule(pdf_path):
 
     dfs = dfs.replace(r'\n', ' ', regex=True)
 
+    # Create a flag for next-day arrivals based on superscript ¹
+    dfs['NextDayArrival'] = dfs['Timetable'].str.contains(r'\u00B9', regex=True)
+
+    # Clean Timetable: remove 'A', trailing characters after '/', and superscript ¹
     dfs["Timetable"] = dfs["Timetable"].str.replace(r'A', '', regex=True)
     dfs["Timetable"] = dfs["Timetable"].str.replace(r'/.*', '', regex=True)
-    dfs["Timetable"] = dfs["Timetable"].str.replace(r'[\u2070-\u209F].', '', regex=True)
+    dfs["Timetable"] = dfs["Timetable"].str.replace(r'\u00B9', '', regex=True)
+
     # Add the Position column
     dfs['Position'] = dfs['Details'].apply(lambda x: '*' if '*' in str(x) else '')
     dfs['Details'] = dfs['Details'].str.replace('*', '')  # Remove the * from Details after extracting it
@@ -94,13 +99,13 @@ def parse_pdf_schedule(pdf_path):
     dfs['Departure'] = pd.to_datetime(dfs['Date'] + ' ' + dfs['DepartureTime'], format='%d/%m/%Y %H:%M', errors='coerce')
     dfs['Arrival'] = pd.to_datetime(dfs['Date'] + ' ' + dfs['ArrivalTime'], format='%d/%m/%Y %H:%M', errors='coerce')
 
-    # Handle cases where Arrival occurs the next day
+    # Handle cases where Arrival occurs the next day (either due to time or superscript)
     dfs.loc[dfs['Arrival'] < dfs['Departure'], 'Arrival'] += pd.Timedelta(days=1)
+    dfs.loc[dfs['NextDayArrival'], 'Arrival'] += pd.Timedelta(days=1)
 
     # Drop unnecessary columns
-    dfs = dfs.drop(columns=['Date', 'Timetable', 'DepartureTime', 'ArrivalTime', 'Details'])
+    dfs = dfs.drop(columns=['Date', 'Timetable', 'DepartureTime', 'ArrivalTime', 'Details', 'NextDayArrival'])
     dfs = dfs[['Departure', 'Origin', 'Arrival', 'Destination', 'Duties','Position']]
     dfs = dfs.rename(columns={'Duties': 'Flight number'})
-
 
     return dfs
