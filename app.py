@@ -36,6 +36,7 @@ if su_progra_file:
     else:
         try:
             su_progra = parse_pdf_schedule(su_progra_file)
+            st.write(su_progra)
 
             # Cargar mi programación
             mi_progra = cargar_mi_progra()
